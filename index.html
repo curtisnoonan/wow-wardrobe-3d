@@ -1,0 +1,1096 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="dark" />
+<link rel="icon" href="data:," />
+<title>WoW Wardrobe 3D</title>
+<style>
+  :root{
+    --bg:#141110; --bg2:#1c1713; --panel:#221c16; --panel2:#2a231b;
+    --line:#3d3226; --line-soft:#2e271e;
+    --ink:#f3e9d2; --ink-dim:#c9b995; --muted:#9a8a6e;
+    --ember:#ff7a2a; --ember-deep:#c64e0e; --gold:#e3b356; --gold-deep:#9a742f;
+    --nature:#8fbf6a; --lunar:#cfd6e4;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{
+    background:
+      radial-gradient(1100px 500px at 18% -10%, rgba(255,122,42,.13), transparent 60%),
+      radial-gradient(900px 600px at 95% 0%, rgba(227,179,86,.08), transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:system-ui, -apple-system, "Segoe UI", sans-serif;
+    height:100dvh;
+    overflow:hidden;
+  }
+  .wrap{
+    height:100dvh;
+    max-width:1280px;
+    margin:0 auto;
+    padding:10px 12px 8px;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+  }
+  header.top{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    padding:2px 2px 8px;
+    border-bottom:1px solid var(--line-soft);
+  }
+  h1{
+    font-family:Georgia, "Times New Roman", serif;
+    font-weight:800;
+    font-size:clamp(22px, 3vw, 34px);
+    line-height:1.05;
+    letter-spacing:.01em;
+    margin:0;
+    color:var(--ink);
+  }
+  h1 .gold{color:var(--gold)}
+  main.layout{
+    flex:1 1 auto;
+    min-height:0;
+    display:grid;
+    grid-template-columns:minmax(0,1.6fr) minmax(300px,380px);
+    gap:12px;
+    margin-top:10px;
+  }
+  .stage{
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    background:linear-gradient(180deg,#1e1915,#171310 70%);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .stage-bar{
+    flex:0 0 auto;
+    padding:8px 12px;
+    border-bottom:1px solid var(--line-soft);
+    background:rgba(0,0,0,.22);
+  }
+  .stage-hint{font-size:14px;color:var(--muted);margin:0;line-height:1.35}
+  .stage-hint b{color:var(--ink-dim);font-weight:700}
+  #gl-wrap{position:relative;flex:1 1 auto;min-height:0;background:#100d0b}
+  #gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+  #gl:active{cursor:grabbing}
+  #gl-error{
+    display:none;position:absolute;inset:12px;z-index:5;
+    background:#2a1408;border:1px solid var(--ember-deep);border-radius:10px;
+    color:#ffd9bd;padding:16px;font-size:15px;line-height:1.5;overflow:auto;
+  }
+  .panel{
+    min-height:0;
+    overflow:auto;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:8px 10px 8px;
+  }
+  .card h2{
+    font-family:Georgia, serif;
+    font-size:14px;
+    letter-spacing:.12em;
+    margin:0 0 6px;
+    color:var(--gold);
+    font-weight:700;
+  }
+  .set-row{display:flex;flex-wrap:wrap;gap:6px}
+  .set-btn,.variant-btn,.arrow-btn{
+    font:inherit;
+    cursor:pointer;
+    border:1px solid var(--line);
+    background:#1b1611;
+    color:var(--ink-dim);
+  }
+  .set-btn{
+    flex:1 1 64px;
+    min-height:44px;
+    padding:6px 6px;
+    border-radius:10px;
+    font-weight:700;
+    font-size:13px;
+    color:var(--ink);
+  }
+  .set-btn small{display:block;font-weight:500;color:var(--muted);font-size:10px;line-height:1.15;margin-top:1px}
+  .set-btn:hover,.variant-btn:hover,.arrow-btn:hover{border-color:var(--gold-deep);color:var(--ink)}
+  .set-btn:focus-visible,.variant-btn:focus-visible,.arrow-btn:focus-visible{
+    outline:3px solid var(--ember);outline-offset:2px;
+  }
+  .set-btn[aria-pressed="true"],.variant-btn[aria-pressed="true"]{
+    border-color:var(--ember);
+    color:var(--ink);
+    background:rgba(255,122,42,.1);
+    box-shadow:inset 0 0 0 1px rgba(255,122,42,.35);
+  }
+  .composition{
+    margin:6px 0 0;
+    font-size:13px;
+    color:var(--ink-dim);
+  }
+  .composition b{color:var(--gold);font-weight:700}
+  .slot-block{border-top:1px solid var(--line-soft);padding:5px 0 2px}
+  .slot-block:first-of-type{border-top:none;padding-top:0}
+  .slot-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .slot-title{
+    font-family:Georgia, serif;
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:.1em;
+    color:var(--ink);
+  }
+  .slot-nav{display:flex;gap:6px}
+  .arrow-btn{
+    width:44px;height:44px;border-radius:10px;
+    background:var(--panel2);color:var(--gold);font-size:22px;line-height:1;
+    display:inline-flex;align-items:center;justify-content:center;
+  }
+  .arrow-btn:active{transform:translateY(1px)}
+  .current-name{margin:2px 0 0;font-size:15px;font-weight:700;line-height:1.2}
+  .current-finish{margin:0 0 4px;font-size:12px;color:var(--muted);line-height:1.2}
+  .variant-row{display:flex;flex-wrap:nowrap;gap:4px}
+  .variant-btn{
+    flex:1 1 0;
+    min-height:44px;
+    min-width:44px;
+    padding:4px 2px;
+    border-radius:10px;
+    text-align:center;
+    font-size:12px;
+    font-weight:700;
+    line-height:1.15;
+  }
+  .variant-btn small{display:none}
+  footer.colophon{
+    flex:0 0 auto;
+    margin-top:8px;
+    padding-top:6px;
+    border-top:1px solid var(--line-soft);
+    font-family:Georgia, "Times New Roman", serif;
+    font-size:13px;
+    letter-spacing:.04em;
+    color:var(--gold);
+    text-align:center;
+  }
+  @media (max-height:820px){
+    .wrap{padding:6px 12px 4px}
+    header.top{padding-bottom:4px}
+    main.layout{margin-top:6px}
+    footer.colophon{margin-top:4px;padding-top:4px}
+    .card{padding:6px 8px}
+    .set-btn small{display:none}
+    .set-btn{min-height:44px}
+    .slot-block{padding:3px 0 0}
+    .current-finish{margin-bottom:2px}
+  }
+  @media (max-width:900px){
+    main.layout{
+      grid-template-columns:1fr;
+      grid-template-rows:minmax(0,1.05fr) minmax(0,0.95fr);
+    }
+    #slot-controls{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      column-gap:12px;
+    }
+    .slot-block{border-top:none;padding-top:2px}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .arrow-btn:active{transform:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>WoW Wardrobe <span class="gold">3D</span></h1>
+  </header>
+  <main class="layout">
+    <section class="stage" aria-label="Wardrobe turntable">
+      <div class="stage-bar">
+        <p class="stage-hint"><b>Drag</b> to turn the table. After a pause it spins on its own; drag again to take over. <b>Tap</b> a worn piece, or a slot below, to swap that piece only.</p>
+      </div>
+      <div id="gl-wrap">
+        <canvas id="gl" aria-label="Mannequin on a turntable. Drag to rotate. Tap a worn piece to swap that slot."></canvas>
+        <div id="gl-error" role="alert"></div>
+      </div>
+    </section>
+    <div class="panel">
+      <section class="card" aria-label="Whole set">
+        <h2>WHOLE SET</h2>
+        <div class="set-row" id="set-row"></div>
+        <p class="composition" id="composition"></p>
+      </section>
+      <section class="card" aria-label="Gear slots">
+        <h2>SLOTS</h2>
+        <div id="slot-controls"></div>
+      </section>
+    </div>
+  </main>
+  <footer class="colophon">WoW Wardrobe 3D</footer>
+</div>
+<script src="assets/three.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* Procedural wardrobe. Geometry is built at runtime from Three.js
+     primitives. No external model or texture file. The mannequin, the
+     four slots, and the four finish sets carry the overnight slice's
+     in-build forms, re-homed onto a yaw turntable. Names are forms and
+     finishes. Figure front is +z: the muzzle mesh sits at head-local +z.
+     Turntable heading is turntable.rotation.y and nothing else. */
+
+  var errBox = document.getElementById('gl-error');
+  function showError(msg){
+    if(!errBox) return;
+    errBox.style.display = 'block';
+    errBox.textContent = 'The 3D stage hit a snag: ' + msg;
+  }
+  window.addEventListener('error', function(e){ showError(e.message || 'unknown error'); });
+  window.addEventListener('unhandledrejection', function(e){ showError(String(e.reason || 'failed to load')); });
+  if (typeof THREE === 'undefined') { showError('three.js failed to load.'); return; }
+
+  var SETS = [
+    { id:'verdant', label:'Verdant', finish:'leaf and living wood' },
+    { id:'ember', label:'Ember', finish:'ember cloth and gold' },
+    { id:'lunar', label:'Lunar', finish:'silver and moon glass' },
+    { id:'forge', label:'Forge', finish:'iron, bone, and bark' }
+  ];
+  var SET_ORDER = ['verdant','ember','lunar','forge'];
+  var SLOTS = [
+    { id:'helm', label:'HELM' },
+    { id:'shoulders', label:'SHOULDERS' },
+    { id:'chest', label:'CHEST' },
+    { id:'weapon', label:'WEAPON' }
+  ];
+  var PIECES = {
+    helm: {
+      verdant: { name:'Antler band', finish:'leaf and horn' },
+      ember:   { name:'Draped hood', finish:'ember cloth, gold rim' },
+      lunar:   { name:'Feather circlet', finish:'silver band, pale feathers' },
+      forge:   { name:'Horned dome', finish:'iron plate, gold brim' }
+    },
+    shoulders: {
+      verdant: { name:'Leaf mantle', finish:'layered leaves' },
+      ember:   { name:'Spiked pauldrons', finish:'iron, ember gem' },
+      lunar:   { name:'Disc pauldrons', finish:'gold discs, moon glass' },
+      forge:   { name:'Bone spikes', finish:'bark pad, bone' }
+    },
+    chest: {
+      verdant: { name:'Leaf vest', finish:'verdant cloth, vine' },
+      ember:   { name:'Flared robe', finish:'ember cloth, gold hem' },
+      lunar:   { name:'Trimmed tunic', finish:'dark cloth, gold collar' },
+      forge:   { name:'Bark cuirass', finish:'bark plates' }
+    },
+    weapon: {
+      verdant: { name:'Rooted staff', finish:'wood, green glass' },
+      ember:   { name:'Crystal staff', finish:'iron shaft, ember crystal' },
+      lunar:   { name:'Crescent staff', finish:'silver crescent' },
+      forge:   { name:'Gilded staff', finish:'wood shaft, gold head' }
+    }
+  };
+  var worn = { helm:'ember', shoulders:'ember', chest:'ember', weapon:'ember' };
+
+  var canvas = document.getElementById('gl');
+  var wrapEl = document.getElementById('gl-wrap');
+  var renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, preserveDrawingBuffer: true });
+  } catch(e){ showError(e.message); return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.12;
+  if ('outputColorSpace' in renderer && THREE.SRGBColorSpace) renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+  var scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x141110);
+  scene.fog = new THREE.Fog(0x141110, 24, 70);
+
+  var camera = new THREE.PerspectiveCamera(32, 1, 0.1, 80);
+
+  scene.add(new THREE.AmbientLight(0xffe2b8, 0.38));
+  var key = new THREE.DirectionalLight(0xffe7c4, 2.5);
+  key.position.set(3.5, 6, 4);
+  key.castShadow = true;
+  key.shadow.mapSize.set(512, 512);
+  key.shadow.camera.left = -4; key.shadow.camera.right = 4;
+  key.shadow.camera.top = 5; key.shadow.camera.bottom = -2;
+  key.shadow.bias = -0.0004;
+  scene.add(key);
+  var rim = new THREE.PointLight(0xff6a1e, 30, 16, 1.8);
+  rim.position.set(-3.4, 2.6, -3.2);
+  scene.add(rim);
+  var fill = new THREE.PointLight(0xe3b356, 8, 14, 2);
+  fill.position.set(2.6, 1.4, -2.4);
+  scene.add(fill);
+  var under = new THREE.PointLight(0xff7a2a, 6, 6, 2);
+  under.position.set(0, 0.35, 1.8);
+  scene.add(under);
+
+  function std(color, rough, metal, emissive, emissiveIntensity){
+    return new THREE.MeshStandardMaterial({
+      color: color, roughness: rough, metalness: metal,
+      emissive: emissive || 0x000000, emissiveIntensity: emissiveIntensity || 0
+    });
+  }
+  var MAT = {
+    fur:      std(0x6e5942, 0.95, 0),
+    furDark:  std(0x4c3a29, 0.95, 0),
+    muzzle:   std(0x9a7d5c, 0.9, 0),
+    hornBase: std(0xd8c9a3, 0.7, 0),
+    gold:     std(0xd9a94f, 0.3, 0.85),
+    goldDark: std(0x9a742f, 0.4, 0.85),
+    iron:     std(0x4a4238, 0.45, 0.85),
+    ironDark: std(0x2e2a24, 0.55, 0.7),
+    wood:     std(0x5d4126, 0.85, 0),
+    woodDark: std(0x3d2a17, 0.9, 0),
+    bark:     std(0x54401f, 0.95, 0),
+    leaf:     std(0x5d8a3c, 0.8, 0),
+    leafDark: std(0x3f6127, 0.85, 0),
+    emberCloth: std(0x8a3410, 0.8, 0),
+    emberClothDark: std(0x5e2408, 0.85, 0),
+    robeRed:  std(0x6e2810, 0.78, 0),
+    bone:     std(0xe6dbc2, 0.65, 0),
+    silver:   std(0xc9cfda, 0.28, 0.85),
+    feather:  std(0xdde3ee, 0.6, 0.15),
+    featherTip: std(0x8d99ad, 0.6, 0.1),
+    gemGreen: std(0x69d97a, 0.2, 0.1, 0x1f7a2e, 0.9),
+    gemEmber: std(0xff8b3d, 0.18, 0.1, 0xd14e00, 1.6),
+    gemMoon:  std(0xe8edf7, 0.15, 0.2, 0x8fa3c8, 0.7),
+    vest:     std(0x51683a, 0.85, 0),
+    tunic:    std(0x33302b, 0.8, 0.05),
+    disc:     std(0x2b241c, 0.7, 0.2),
+    discTop:  std(0x362c20, 0.6, 0.25)
+  };
+
+  function mesh(geo, mat, x, y, z, parent){
+    var m = new THREE.Mesh(geo, mat);
+    m.position.set(x || 0, y || 0, z || 0);
+    m.castShadow = true; m.receiveShadow = true;
+    (parent || scene).add(m);
+    return m;
+  }
+  function cone(mat, r, h, seg){ return new THREE.Mesh(new THREE.ConeGeometry(r, h, seg || 10), mat); }
+  function place(obj, x, y, z, parent, rx, ry, rz){
+    obj.position.set(x, y, z);
+    if (rx) obj.rotation.x = rx;
+    if (ry) obj.rotation.y = ry;
+    if (rz) obj.rotation.z = rz;
+    obj.traverse(function(c){ if (c.isMesh){ c.castShadow = true; c.receiveShadow = true; } });
+    parent.add(obj);
+    return obj;
+  }
+
+  var floor = mesh(new THREE.CircleGeometry(14, 48), std(0x1a1611, 1, 0), 0, 0, 0);
+  floor.rotation.x = -Math.PI / 2;
+  floor.castShadow = false;
+  floor.receiveShadow = true;
+
+  [-4.6, -2.8, 3.1, 4.9].forEach(function(x, i){
+    var h = 3.2 + (i % 3) * 0.7;
+    var p = mesh(new THREE.BoxGeometry(0.55, h, 0.55), std(0x241e17, 0.9, 0), x, h / 2, -4.4 - (i % 2) * 0.7);
+    p.castShadow = false;
+    var cap = mesh(new THREE.SphereGeometry(0.09, 10, 10), MAT.gemEmber, x, h + 0.16, p.position.z);
+    cap.castShadow = false;
+  });
+
+  function makeSparkTexture(){
+    var c = document.createElement('canvas'); c.width = c.height = 64;
+    var g = c.getContext('2d');
+    var grad = g.createRadialGradient(32, 32, 2, 32, 32, 30);
+    grad.addColorStop(0, 'rgba(255,190,110,1)');
+    grad.addColorStop(0.4, 'rgba(255,122,42,0.65)');
+    grad.addColorStop(1, 'rgba(255,122,42,0)');
+    g.fillStyle = grad; g.fillRect(0, 0, 64, 64);
+    var tex = new THREE.CanvasTexture(c);
+    tex.name = 'ember-spark-canvas';
+    return tex;
+  }
+  var SPARKS = 70;
+  var sparkPos = new Float32Array(SPARKS * 3);
+  var sparkSeed = [];
+  for (var si = 0; si < SPARKS; si++){
+    sparkSeed.push({ a: Math.random() * Math.PI * 2, r: 1.35 + Math.random() * 2.4, s: 0.12 + Math.random() * 0.28, o: Math.random() });
+  }
+  var sparkGeo = new THREE.BufferGeometry();
+  sparkGeo.setAttribute('position', new THREE.BufferAttribute(sparkPos, 3));
+  var sparks = new THREE.Points(sparkGeo, new THREE.PointsMaterial({
+    size: 0.12, map: makeSparkTexture(), transparent: true, depthWrite: false,
+    blending: THREE.AdditiveBlending, color: 0xffa04d
+  }));
+  scene.add(sparks);
+
+  /* Turntable yaw is the only heading. Camera stays put. */
+  var turntable = new THREE.Group();
+  turntable.name = 'turntable';
+  scene.add(turntable);
+
+  var pedestal = new THREE.Group();
+  turntable.add(pedestal);
+  var pedBase = mesh(new THREE.CylinderGeometry(1.55, 1.75, 0.22, 40), MAT.disc, 0, 0.11, 0, pedestal);
+  pedBase.castShadow = false;
+  var pedRim = mesh(new THREE.TorusGeometry(1.56, 0.045, 12, 48), MAT.goldDark, 0, 0.22, 0, pedestal);
+  pedRim.rotation.x = Math.PI / 2;
+  var pedTop = mesh(new THREE.CylinderGeometry(1.28, 1.4, 0.12, 40), MAT.discTop, 0, 0.27, 0, pedestal);
+  pedTop.castShadow = false;
+  var notch = mesh(new THREE.OctahedronGeometry(0.07), MAT.gemEmber, 0, 0.36, 1.22, pedestal);
+  notch.name = 'turntable-notch';
+
+  var figure = new THREE.Group();
+  figure.name = 'figure';
+  figure.position.y = 0.33;
+  turntable.add(figure);
+
+  [-0.24, 0.24].forEach(function(x){
+    mesh(new THREE.CylinderGeometry(0.13, 0.17, 0.92, 12), MAT.furDark, x, 0.46, 0, figure);
+    mesh(new THREE.BoxGeometry(0.24, 0.14, 0.36), MAT.woodDark, x, 0.07, 0.05, figure);
+  });
+  mesh(new THREE.SphereGeometry(0.4, 20, 14), MAT.furDark, 0, 0.95, 0, figure).scale.set(1.15, 0.62, 0.85);
+  var belt = mesh(new THREE.TorusGeometry(0.4, 0.055, 10, 24), MAT.woodDark, 0, 1.08, 0, figure);
+  belt.rotation.x = Math.PI / 2; belt.scale.set(1.1, 0.85, 1);
+  mesh(new THREE.OctahedronGeometry(0.09), MAT.gemEmber, 0, 1.08, 0.4, figure);
+
+  var torsoPts = [];
+  [[0.001,0],[0.30,0.02],[0.36,0.25],[0.40,0.55],[0.44,0.8],[0.40,1.0],[0.26,1.12],[0.001,1.14]].forEach(function(p){
+    torsoPts.push(new THREE.Vector2(p[0], p[1]));
+  });
+  var torso = mesh(new THREE.LatheGeometry(torsoPts, 24), MAT.fur, 0, 1.02, 0, figure);
+  torso.scale.set(1.18, 1, 0.88);
+
+  function buildArm(side){
+    var arm = new THREE.Group();
+    arm.position.set(0.52 * side, 1.98, 0);
+    mesh(new THREE.CylinderGeometry(0.115, 0.10, 0.52, 12), MAT.fur, 0, -0.24, 0, arm);
+    var fore = mesh(new THREE.CylinderGeometry(0.095, 0.085, 0.46, 12), MAT.fur, 0.05 * side, -0.68, 0.03, arm);
+    fore.rotation.z = -0.12 * side;
+    mesh(new THREE.SphereGeometry(0.105, 12, 10), MAT.muzzle, 0.09 * side, -0.93, 0.05, arm);
+    arm.rotation.z = 0.38 * side;
+    figure.add(arm);
+  }
+  buildArm(-1);
+  buildArm(1);
+
+  var headG = new THREE.Group();
+  headG.position.set(0, 2.32, 0);
+  figure.add(headG);
+  mesh(new THREE.SphereGeometry(0.31, 24, 18), MAT.fur, 0, 0.08, 0, headG).scale.set(0.92, 1.05, 0.95);
+  var muzzle = mesh(new THREE.SphereGeometry(0.17, 16, 12), MAT.muzzle, 0, -0.06, 0.2, headG);
+  muzzle.scale.set(1.05, 0.75, 0.9);
+  muzzle.name = 'muzzle';
+  mesh(new THREE.SphereGeometry(0.055, 10, 8), MAT.furDark, 0, 0.0, 0.36, headG);
+  [-1, 1].forEach(function(s){
+    var eye = mesh(new THREE.SphereGeometry(0.032, 8, 8), MAT.gemEmber, 0.115 * s, 0.14, 0.26, headG);
+    eye.castShadow = false;
+    var ear = cone(MAT.furDark, 0.07, 0.22, 8);
+    place(ear, 0.3 * s, 0.22, 0, headG, 0, 0, -0.7 * s);
+    var horn = cone(MAT.hornBase, 0.055, 0.34, 8);
+    place(horn, 0.3 * s, 0.3, -0.02, headG, -0.25, 0, -0.85 * s);
+  });
+  var braid = mesh(new THREE.CylinderGeometry(0.028, 0.02, 0.3, 8), MAT.furDark, 0.16, -0.28, 0.22, headG);
+  braid.rotation.z = 0.15;
+  mesh(new THREE.SphereGeometry(0.04, 8, 8), MAT.gold, 0.185, -0.44, 0.22, headG);
+
+  var gearGroups = { helm:{}, shoulders:{}, chest:{}, weapon:{} };
+  var raycastTargets = [];
+
+  function registerVariant(slot, setId, group){
+    group.visible = false;
+    group.name = 'gear-' + slot + '-' + setId;
+    figure.add(group);
+    gearGroups[slot][setId] = group;
+    group.traverse(function(c){
+      if (c.isMesh){
+        c.userData.slotId = slot;
+        c.castShadow = true;
+        c.receiveShadow = true;
+        raycastTargets.push(c);
+      }
+    });
+  }
+
+  (function buildHelms(){
+    var g = new THREE.Group();
+    g.position.set(0, 2.32, 0);
+    var band = mesh(new THREE.TorusGeometry(0.30, 0.04, 10, 28), MAT.gold, 0, 0.16, 0, g);
+    band.rotation.x = Math.PI / 2 - 0.15;
+    mesh(new THREE.OctahedronGeometry(0.07), MAT.gemGreen, 0, 0.14, 0.30, g);
+    [-1, 1].forEach(function(s){
+      var base = cone(MAT.hornBase, 0.05, 0.42, 8);
+      place(base, 0.26 * s, 0.42, -0.03, g, -0.15, 0, -0.5 * s);
+      var tine1 = cone(MAT.hornBase, 0.035, 0.3, 8);
+      place(tine1, 0.38 * s, 0.52, -0.05, g, 0, 0, -1.05 * s);
+      var tine2 = cone(MAT.hornBase, 0.028, 0.24, 8);
+      place(tine2, 0.33 * s, 0.62, -0.08, g, -0.5, 0, -0.3 * s);
+      var leafM = cone(MAT.leaf, 0.05, 0.16, 6);
+      place(leafM, 0.2 * s, 0.2, 0.1, g, 0.6, 0, 0.4 * s);
+    });
+    registerVariant('helm', 'verdant', g);
+
+    g = new THREE.Group();
+    g.position.set(0, 2.32, 0);
+    var hood = mesh(new THREE.SphereGeometry(0.38, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.62), MAT.emberCloth, 0, 0.18, -0.07, g);
+    hood.scale.set(1, 1.12, 1);
+    hood.rotation.x = -0.55;
+    var peak = cone(MAT.emberClothDark, 0.16, 0.34, 12);
+    place(peak, 0, 0.58, -0.16, g, -0.75, 0, 0);
+    var trim = mesh(new THREE.TorusGeometry(0.315, 0.028, 8, 28), MAT.gold, 0, 0.13, 0.05, g);
+    trim.rotation.x = Math.PI / 2 - 0.35;
+    [-1, 1].forEach(function(s){
+      mesh(new THREE.CylinderGeometry(0.07, 0.11, 0.42, 10, 1, true), MAT.emberCloth, 0.3 * s, -0.18, -0.05, g);
+    });
+    mesh(new THREE.OctahedronGeometry(0.065), MAT.gemEmber, 0, 0.2, 0.33, g);
+    registerVariant('helm', 'ember', g);
+
+    g = new THREE.Group();
+    g.position.set(0, 2.32, 0);
+    var circ = mesh(new THREE.TorusGeometry(0.295, 0.032, 10, 28), MAT.silver, 0, 0.17, 0, g);
+    circ.rotation.x = Math.PI / 2 - 0.12;
+    mesh(new THREE.SphereGeometry(0.06, 12, 10), MAT.gemMoon, 0, 0.18, 0.30, g);
+    [-0.85, -0.42, 0, 0.42, 0.85].forEach(function(a, i){
+      var f = cone(i === 2 ? MAT.feather : MAT.featherTip, 0.075, 0.52 - Math.abs(a) * 0.14, 6);
+      f.scale.set(0.55, 1, 1.6);
+      place(f, Math.sin(a) * 0.26, 0.42, -0.14 - Math.cos(a) * 0.03, g, -0.55, 0, -a * 0.9);
+    });
+    [-1, 1].forEach(function(s){
+      mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.16, 6), MAT.silver, 0.29 * s, 0.02, 0.06, g);
+      mesh(new THREE.SphereGeometry(0.035, 8, 8), MAT.gemMoon, 0.29 * s, -0.08, 0.06, g);
+    });
+    registerVariant('helm', 'lunar', g);
+
+    g = new THREE.Group();
+    g.position.set(0, 2.32, 0);
+    mesh(new THREE.SphereGeometry(0.345, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.55), MAT.iron, 0, 0.1, 0, g);
+    var brim = mesh(new THREE.TorusGeometry(0.335, 0.035, 10, 28), MAT.goldDark, 0, 0.12, 0, g);
+    brim.rotation.x = Math.PI / 2;
+    mesh(new THREE.BoxGeometry(0.07, 0.24, 0.04), MAT.iron, 0, -0.08, 0.31, g);
+    var crest = mesh(new THREE.BoxGeometry(0.05, 0.16, 0.44), MAT.emberCloth, 0, 0.42, -0.03, g);
+    crest.rotation.x = 0.12;
+    [-1, 1].forEach(function(s){
+      var h = cone(MAT.iron, 0.06, 0.34, 10);
+      place(h, 0.33 * s, 0.05, 0, g, 0, 0, 1.25 * s);
+      mesh(new THREE.SphereGeometry(0.045, 8, 8), MAT.gold, 0.3 * s, 0.13, 0.12, g);
+    });
+    mesh(new THREE.OctahedronGeometry(0.06), MAT.gemEmber, 0, 0.16, 0.33, g);
+    registerVariant('helm', 'forge', g);
+  })();
+
+  function shoulderBase(g, s, mainMat){
+    var pad = mesh(new THREE.SphereGeometry(0.26, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.62), mainMat, 0.56 * s, 2.06, 0, g);
+    pad.scale.set(1.15, 0.85, 1.15);
+    pad.rotation.z = -0.25 * s;
+    return pad;
+  }
+  (function buildShoulders(){
+    var g = new THREE.Group();
+    [-1, 1].forEach(function(s){
+      shoulderBase(g, s, MAT.leafDark);
+      for (var i = 0; i < 5; i++){
+        var lf = cone(MAT.leaf, 0.07, 0.24, 6);
+        lf.scale.set(0.5, 1, 1.4);
+        place(lf, (0.44 + i * 0.07) * s, 2.2 - (i % 2) * 0.05, -0.12 + i * 0.06, g, 0.9, 0, -0.5 * s);
+      }
+      mesh(new THREE.SphereGeometry(0.06, 10, 8), MAT.gemGreen, 0.58 * s, 2.12, 0.2, g);
+    });
+    registerVariant('shoulders', 'verdant', g);
+
+    g = new THREE.Group();
+    [-1, 1].forEach(function(s){
+      shoulderBase(g, s, MAT.ironDark);
+      var trimT = mesh(new THREE.TorusGeometry(0.24, 0.03, 8, 22, Math.PI), MAT.gold, 0.56 * s, 2.1, 0, g);
+      trimT.rotation.set(0.4, 0, 1.2 * s);
+      for (var i = 0; i < 3; i++){
+        var sp = cone(MAT.iron, 0.05, 0.26, 8);
+        place(sp, (0.42 + i * 0.13) * s, 2.3, -0.05 + (i % 2) * 0.08, g, -0.2, 0, -0.35 * s);
+      }
+      var cry = mesh(new THREE.OctahedronGeometry(0.085), MAT.gemEmber, 0.6 * s, 2.14, 0.18, g);
+      cry.scale.y = 1.4;
+    });
+    registerVariant('shoulders', 'ember', g);
+
+    g = new THREE.Group();
+    [-1, 1].forEach(function(s){
+      shoulderBase(g, s, MAT.bark);
+      [[0.5, 2.34, 0, 0.4], [0.64, 2.3, 0.08, 0.55], [0.62, 2.28, -0.12, 0.3], [0.44, 2.26, -0.1, 0.2]].forEach(function(cfg){
+        var b = cone(MAT.bone, 0.055, 0.36, 8);
+        place(b, cfg[0] * s, cfg[1], cfg[2], g, -0.15, 0, -cfg[3] * s);
+      });
+      var strap = mesh(new THREE.TorusGeometry(0.22, 0.028, 8, 20, Math.PI), MAT.woodDark, 0.56 * s, 2.02, 0, g);
+      strap.rotation.set(0, 0, 1.4 * s);
+    });
+    registerVariant('shoulders', 'forge', g);
+
+    g = new THREE.Group();
+    [-1, 1].forEach(function(s){
+      shoulderBase(g, s, MAT.goldDark);
+      var disc = mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.05, 20), MAT.gold, 0.62 * s, 2.14, 0.14, g);
+      disc.rotation.x = Math.PI / 2 - 0.35;
+      disc.rotation.z = 0.2 * s;
+      mesh(new THREE.SphereGeometry(0.055, 10, 8), MAT.gemMoon, 0.63 * s, 2.15, 0.19, g);
+      for (var i = 0; i < 4; i++){
+        var ray = cone(MAT.gold, 0.032, 0.17, 6);
+        place(ray, (0.5 + i * 0.09) * s, 2.3, -0.14 + i * 0.02, g, -0.4, 0, -0.3 * s);
+      }
+    });
+    registerVariant('shoulders', 'lunar', g);
+  })();
+
+  (function buildChests(){
+    var g = new THREE.Group();
+    var vestPts = [];
+    [[0.001,0],[0.34,0.02],[0.42,0.3],[0.47,0.62],[0.5,0.86],[0.44,1.02],[0.28,1.1],[0.001,1.11]].forEach(function(p){
+      vestPts.push(new THREE.Vector2(p[0], p[1]));
+    });
+    var vest = mesh(new THREE.LatheGeometry(vestPts, 24), MAT.vest, 0, 1.0, 0, g);
+    vest.scale.set(1.22, 1, 0.92);
+    var vine = mesh(new THREE.TorusGeometry(0.42, 0.03, 8, 26), MAT.leafDark, 0, 1.62, 0, g);
+    vine.rotation.set(Math.PI / 2 + 0.25, 0, 0.5);
+    vine.scale.set(1.15, 0.9, 1);
+    [-0.15, 0.05, 0.22].forEach(function(x, i){
+      var lf = cone(MAT.leaf, 0.06, 0.18, 6);
+      lf.scale.set(0.5, 1, 1.4);
+      place(lf, x, 1.78 - i * 0.14, 0.42, g, 0.7, 0, 0.3);
+    });
+    mesh(new THREE.SphereGeometry(0.06, 10, 8), MAT.gemGreen, 0, 1.86, 0.44, g);
+    registerVariant('chest', 'verdant', g);
+
+    g = new THREE.Group();
+    var robePts = [];
+    [[0.001,0],[0.52,0.0],[0.5,0.25],[0.46,0.6],[0.48,0.9],[0.44,1.05],[0.28,1.12],[0.001,1.13]].forEach(function(p){
+      robePts.push(new THREE.Vector2(p[0], p[1]));
+    });
+    var robe = mesh(new THREE.LatheGeometry(robePts, 24), MAT.robeRed, 0, 0.55, 0, g);
+    robe.scale.set(1.15, 1.35, 0.9);
+    var robeTrim = mesh(new THREE.TorusGeometry(0.5, 0.032, 8, 28), MAT.gold, 0, 0.62, 0, g);
+    robeTrim.rotation.x = Math.PI / 2;
+    robeTrim.scale.set(1.2, 0.92, 1);
+    var sash = mesh(new THREE.TorusGeometry(0.42, 0.045, 8, 26), MAT.goldDark, 0, 1.14, 0, g);
+    sash.rotation.x = Math.PI / 2;
+    sash.scale.set(1.18, 0.9, 1);
+    mesh(new THREE.OctahedronGeometry(0.075), MAT.gemEmber, 0, 1.8, 0.45, g);
+    var panelF = mesh(new THREE.BoxGeometry(0.2, 0.55, 0.03), MAT.emberClothDark, 0, 1.5, 0.44, g);
+    panelF.rotation.x = 0.06;
+    registerVariant('chest', 'ember', g);
+
+    g = new THREE.Group();
+    var barkPts = [];
+    [[0.001,0],[0.35,0.02],[0.43,0.3],[0.48,0.62],[0.51,0.86],[0.45,1.02],[0.28,1.1],[0.001,1.11]].forEach(function(p){
+      barkPts.push(new THREE.Vector2(p[0], p[1]));
+    });
+    var barkM = mesh(new THREE.LatheGeometry(barkPts, 24), MAT.bark, 0, 1.0, 0, g);
+    barkM.scale.set(1.23, 1, 0.93);
+    [[-0.2, 1.8], [0.2, 1.8], [0, 1.55], [-0.18, 1.3], [0.18, 1.3]].forEach(function(p){
+      var plate = mesh(new THREE.BoxGeometry(0.3, 0.2, 0.05), MAT.wood, p[0], p[1], 0.42, g);
+      plate.rotation.x = -0.1;
+    });
+    var barkStrap = mesh(new THREE.TorusGeometry(0.44, 0.035, 8, 26), MAT.woodDark, 0, 1.66, 0, g);
+    barkStrap.rotation.set(Math.PI / 2 + 0.3, 0, -0.6);
+    barkStrap.scale.set(1.15, 0.9, 1);
+    registerVariant('chest', 'forge', g);
+
+    g = new THREE.Group();
+    var tunPts = [];
+    [[0.001,0],[0.34,0.02],[0.42,0.3],[0.47,0.62],[0.5,0.86],[0.44,1.02],[0.28,1.1],[0.001,1.11]].forEach(function(p){
+      tunPts.push(new THREE.Vector2(p[0], p[1]));
+    });
+    var tun = mesh(new THREE.LatheGeometry(tunPts, 24), MAT.tunic, 0, 1.0, 0, g);
+    tun.scale.set(1.22, 1, 0.92);
+    var collar = mesh(new THREE.TorusGeometry(0.3, 0.04, 8, 24), MAT.gold, 0, 2.06, 0, g);
+    collar.rotation.x = Math.PI / 2 - 0.2;
+    collar.scale.set(1.1, 0.9, 1);
+    var chestGem = mesh(new THREE.OctahedronGeometry(0.085), MAT.gemMoon, 0, 1.78, 0.45, g);
+    chestGem.scale.y = 1.35;
+    [-1, 1].forEach(function(s){
+      var stripe = mesh(new THREE.BoxGeometry(0.05, 0.7, 0.03), MAT.goldDark, 0.3 * s, 1.6, 0.4, g);
+      stripe.rotation.z = 0.12 * s;
+      stripe.rotation.x = -0.08;
+    });
+    var hem = mesh(new THREE.TorusGeometry(0.4, 0.03, 8, 26), MAT.gold, 0, 1.06, 0, g);
+    hem.rotation.x = Math.PI / 2;
+    hem.scale.set(1.18, 0.9, 1);
+    registerVariant('chest', 'lunar', g);
+  })();
+
+  (function buildWeapons(){
+    function staffGroup(){
+      var g = new THREE.Group();
+      g.position.set(0.88, 0.55, 0.18);
+      g.rotation.z = -0.1;
+      return g;
+    }
+    var g = staffGroup();
+    mesh(new THREE.CylinderGeometry(0.038, 0.05, 2.3, 10), MAT.wood, 0, 1.15, 0, g);
+    mesh(new THREE.SphereGeometry(0.13, 14, 12), MAT.gemGreen, 0, 2.42, 0, g);
+    [-1, 1].forEach(function(s){
+      var root = cone(MAT.woodDark, 0.04, 0.3, 8);
+      place(root, 0.1 * s, 2.28, 0, g, 0, 0, -1.1 * s);
+      var lf = cone(MAT.leaf, 0.06, 0.2, 6);
+      lf.scale.set(0.5, 1, 1.4);
+      place(lf, 0.14 * s, 2.36, 0.03, g, 0.5, 0, -0.8 * s);
+    });
+    var wrap1 = mesh(new THREE.TorusGeometry(0.055, 0.018, 6, 14), MAT.leafDark, 0, 1.7, 0, g);
+    wrap1.rotation.x = Math.PI / 2;
+    registerVariant('weapon', 'verdant', g);
+
+    g = staffGroup();
+    mesh(new THREE.CylinderGeometry(0.035, 0.045, 2.3, 10), MAT.ironDark, 0, 1.15, 0, g);
+    var claw = mesh(new THREE.TorusGeometry(0.11, 0.028, 8, 18, Math.PI * 1.5), MAT.goldDark, 0, 2.34, 0, g);
+    claw.rotation.z = Math.PI * 0.75;
+    var pyre = mesh(new THREE.OctahedronGeometry(0.14), MAT.gemEmber, 0, 2.42, 0, g);
+    pyre.scale.y = 1.5;
+    [-1, 1].forEach(function(s){
+      var prong = cone(MAT.iron, 0.032, 0.26, 8);
+      place(prong, 0.11 * s, 2.3, 0, g, 0, 0, -0.5 * s);
+    });
+    var wrap2 = mesh(new THREE.TorusGeometry(0.052, 0.018, 6, 14), MAT.emberCloth, 0, 1.55, 0, g);
+    wrap2.rotation.x = Math.PI / 2;
+    registerVariant('weapon', 'ember', g);
+
+    g = staffGroup();
+    mesh(new THREE.CylinderGeometry(0.034, 0.044, 2.3, 10), MAT.woodDark, 0, 1.15, 0, g);
+    var crescent = mesh(new THREE.TorusGeometry(0.17, 0.038, 10, 26, Math.PI * 1.45), MAT.silver, 0, 2.48, 0, g);
+    crescent.rotation.z = Math.PI * 0.78;
+    mesh(new THREE.SphereGeometry(0.055, 10, 8), MAT.gemMoon, 0, 2.36, 0, g);
+    var star = mesh(new THREE.OctahedronGeometry(0.05), MAT.gold, 0.1, 2.62, 0, g);
+    star.scale.y = 1.6;
+    registerVariant('weapon', 'lunar', g);
+
+    g = staffGroup();
+    mesh(new THREE.CylinderGeometry(0.045, 0.055, 2.2, 10), MAT.wood, 0, 1.1, 0, g);
+    var headBlock = mesh(new THREE.OctahedronGeometry(0.16), MAT.gold, 0, 2.36, 0, g);
+    headBlock.scale.set(1, 1.25, 1);
+    var bandG = mesh(new THREE.TorusGeometry(0.065, 0.02, 6, 14), MAT.goldDark, 0, 2.05, 0, g);
+    bandG.rotation.x = Math.PI / 2;
+    [-1, 1].forEach(function(s){
+      var fin = cone(MAT.gold, 0.04, 0.22, 6);
+      fin.scale.z = 0.4;
+      place(fin, 0.13 * s, 2.3, 0, g, 0, 0, -1.2 * s);
+    });
+    mesh(new THREE.SphereGeometry(0.05, 8, 8), MAT.gemEmber, 0, 0.06, 0, g);
+    registerVariant('weapon', 'forge', g);
+  })();
+
+  SLOTS.forEach(function(s){
+    SET_ORDER.forEach(function(id){
+      if (!gearGroups[s.id][id]) throw new Error('missing piece ' + s.id + ' ' + id);
+    });
+  });
+
+  function applyGear(){
+    SLOTS.forEach(function(s){
+      var chosen = worn[s.id];
+      Object.keys(gearGroups[s.id]).forEach(function(id){
+        gearGroups[s.id][id].visible = id === chosen;
+      });
+    });
+  }
+  function renderPanel(){
+    var ids = SLOTS.map(function(s){ return worn[s.id]; });
+    var wholeId = ids.every(function(id){ return id === ids[0]; }) ? ids[0] : null;
+    var comp = document.getElementById('composition');
+    comp.textContent = '';
+    if (wholeId){
+      var set = SETS.filter(function(x){ return x.id === wholeId; })[0];
+      comp.appendChild(document.createTextNode('Whole set · '));
+      var strong = document.createElement('b');
+      strong.textContent = set.label;
+      comp.appendChild(strong);
+      comp.appendChild(document.createTextNode(' — ' + set.finish));
+    } else {
+      comp.appendChild(document.createTextNode('Per-slot mix'));
+    }
+    document.querySelectorAll('.set-btn').forEach(function(btn){
+      btn.setAttribute('aria-pressed', btn.getAttribute('data-set') === wholeId ? 'true' : 'false');
+    });
+    document.querySelectorAll('.slot-block').forEach(function(block){
+      var id = block.getAttribute('data-slot');
+      var piece = PIECES[id][worn[id]];
+      block.querySelector('.current-name').textContent = piece.name;
+      block.querySelector('.current-finish').textContent = piece.finish;
+      block.querySelectorAll('.variant-btn').forEach(function(btn){
+        btn.setAttribute('aria-pressed', btn.getAttribute('data-variant') === worn[id] ? 'true' : 'false');
+      });
+    });
+  }
+  function selectSlot(slot, setId){
+    worn[slot] = setId;
+    applyGear();
+    renderPanel();
+  }
+  function applySet(setId){
+    SLOTS.forEach(function(s){ worn[s.id] = setId; });
+    applyGear();
+    renderPanel();
+  }
+  function cycleSlot(slot, dir){
+    var i = SET_ORDER.indexOf(worn[slot]);
+    var n = SET_ORDER.length;
+    selectSlot(slot, SET_ORDER[(i + dir + n) % n]);
+  }
+
+  var setRow = document.getElementById('set-row');
+  SETS.forEach(function(set){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'set-btn';
+    b.setAttribute('data-set', set.id);
+    b.appendChild(document.createTextNode(set.label));
+    var small = document.createElement('small');
+    small.textContent = set.finish;
+    b.appendChild(small);
+    b.addEventListener('click', function(){ applySet(set.id); });
+    setRow.appendChild(b);
+  });
+
+  var slotControls = document.getElementById('slot-controls');
+  SLOTS.forEach(function(s){
+    var block = document.createElement('div');
+    block.className = 'slot-block';
+    block.setAttribute('data-slot', s.id);
+    var head = document.createElement('div');
+    head.className = 'slot-head';
+    var title = document.createElement('span');
+    title.className = 'slot-title';
+    title.textContent = s.label;
+    var nav = document.createElement('div');
+    nav.className = 'slot-nav';
+    var prev = document.createElement('button');
+    prev.type = 'button';
+    prev.className = 'arrow-btn';
+    prev.textContent = '‹';
+    prev.setAttribute('aria-label', 'Previous ' + s.label.toLowerCase());
+    prev.addEventListener('click', function(){ cycleSlot(s.id, -1); });
+    var next = document.createElement('button');
+    next.type = 'button';
+    next.className = 'arrow-btn';
+    next.textContent = '›';
+    next.setAttribute('aria-label', 'Next ' + s.label.toLowerCase());
+    next.addEventListener('click', function(){ cycleSlot(s.id, 1); });
+    nav.appendChild(prev);
+    nav.appendChild(next);
+    head.appendChild(title);
+    head.appendChild(nav);
+    block.appendChild(head);
+    var name = document.createElement('p');
+    name.className = 'current-name';
+    block.appendChild(name);
+    var finish = document.createElement('p');
+    finish.className = 'current-finish';
+    block.appendChild(finish);
+    var row = document.createElement('div');
+    row.className = 'variant-row';
+    SET_ORDER.forEach(function(id){
+      var piece = PIECES[s.id][id];
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'variant-btn';
+      b.setAttribute('data-variant', id);
+      b.setAttribute('aria-label', s.label + ': ' + piece.name + ', ' + piece.finish);
+      b.appendChild(document.createTextNode(SETS.filter(function(x){ return x.id === id; })[0].label));
+      var small = document.createElement('small');
+      small.textContent = piece.name;
+      b.appendChild(small);
+      b.addEventListener('click', function(){ selectSlot(s.id, id); });
+      row.appendChild(b);
+    });
+    block.appendChild(row);
+    slotControls.appendChild(block);
+  });
+  applyGear();
+  renderPanel();
+
+  var fitPoints = [];
+  function collectFitPoints(){
+    fitPoints = [];
+    turntable.updateWorldMatrix(true, true);
+    var inv = new THREE.Matrix4().copy(turntable.matrixWorld).invert();
+    turntable.traverse(function(obj){
+      if (!obj.isMesh || !obj.geometry) return;
+      if (!obj.geometry.boundingBox) obj.geometry.computeBoundingBox();
+      var bb = obj.geometry.boundingBox;
+      var xs = [bb.min.x, bb.max.x], ys = [bb.min.y, bb.max.y], zs = [bb.min.z, bb.max.z];
+      for (var ix = 0; ix < 2; ix++){
+        for (var iy = 0; iy < 2; iy++){
+          for (var iz = 0; iz < 2; iz++){
+            var v = new THREE.Vector3(xs[ix], ys[iy], zs[iz]);
+            obj.localToWorld(v);
+            v.applyMatrix4(inv);
+            fitPoints.push(v);
+          }
+        }
+      }
+    });
+  }
+  var fitSpinner = new THREE.Object3D();
+  var fitYawSamples = [];
+  for (var fy = 0; fy < 12; fy++) fitYawSamples.push(fy * Math.PI / 6);
+  function frameCamera(){
+    if (!fitPoints.length) return;
+    var minY = Infinity, maxY = -Infinity;
+    for (var i = 0; i < fitPoints.length; i++){
+      minY = Math.min(minY, fitPoints[i].y);
+      maxY = Math.max(maxY, fitPoints[i].y);
+    }
+    var lookY = (minY + maxY) * 0.5;
+    camera.fov = 32;
+    var dist = ((maxY - minY) * 0.62) / Math.tan((32 * Math.PI / 180) / 2);
+    var ndc = new THREE.Vector3();
+    var guard = 0;
+    while (guard < 24){
+      camera.position.set(0, lookY + dist * 0.04, dist);
+      camera.lookAt(0, lookY, 0);
+      camera.updateProjectionMatrix();
+      camera.updateMatrixWorld(true);
+      var ok = true;
+      for (var s = 0; s < fitYawSamples.length && ok; s++){
+        fitSpinner.rotation.y = fitYawSamples[s];
+        fitSpinner.updateMatrix();
+        for (var p = 0; p < fitPoints.length; p++){
+          ndc.copy(fitPoints[p]).applyMatrix4(fitSpinner.matrix);
+          ndc.project(camera);
+          if (Math.abs(ndc.x) > 0.90 || Math.abs(ndc.y) > 0.88 || ndc.z < -1 || ndc.z > 1){
+            ok = false;
+            break;
+          }
+        }
+      }
+      if (ok) break;
+      dist *= 1.06;
+      guard++;
+    }
+  }
+
+  /* Drag right (screen +x, camera on world +z) increases rotation.y,
+     which swings local +z (the muzzle) toward world +x, screen right. */
+  var yaw = 0.55;
+  var auto = false;
+  var dragging = false;
+  var idleLeft = 0;
+  var IDLE_MS = 1800;
+  var AUTO_SPEED = 0.42;
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var activeId = null;
+  var lastX = 0;
+  var moved = 0;
+  function interruptAuto(){
+    auto = false;
+    idleLeft = 0;
+  }
+  function armIdle(){
+    auto = false;
+    idleLeft = reduceMotion ? 0 : IDLE_MS;
+  }
+
+  canvas.addEventListener('pointerdown', function(e){
+    if (activeId !== null) return;
+    if (e.cancelable) e.preventDefault();
+    activeId = e.pointerId;
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* still tracked on the canvas */ }
+    interruptAuto();
+    dragging = true;
+    lastX = e.clientX;
+    moved = 0;
+  }, { passive: false });
+  canvas.addEventListener('pointermove', function(e){
+    if (e.pointerId !== activeId) return;
+    var dx = e.clientX - lastX;
+    lastX = e.clientX;
+    moved += Math.abs(dx) + Math.abs(e.movementY || 0);
+    if (moved > 6) yaw += dx * 0.007;
+  });
+  function endPointer(e){
+    if (e.pointerId !== activeId) return;
+    var tap = moved < 8;
+    activeId = null;
+    dragging = false;
+    if (tap) tapCycle(e);
+    armIdle();
+  }
+  canvas.addEventListener('pointerup', endPointer);
+  canvas.addEventListener('pointercancel', function(e){
+    if (e.pointerId !== activeId) return;
+    activeId = null;
+    dragging = false;
+    armIdle();
+  });
+
+  var raycaster = new THREE.Raycaster();
+  function tapCycle(e){
+    var rect = canvas.getBoundingClientRect();
+    var ndc = new THREE.Vector2(
+      ((e.clientX - rect.left) / rect.width) * 2 - 1,
+      -((e.clientY - rect.top) / rect.height) * 2 + 1
+    );
+    raycaster.setFromCamera(ndc, camera);
+    var hits = raycaster.intersectObjects(raycastTargets.filter(function(m){
+      var n = m;
+      while (n){ if (n.visible === false) return false; n = n.parent; }
+      return true;
+    }), false);
+    if (hits.length && hits[0].object.userData.slotId){
+      cycleSlot(hits[0].object.userData.slotId, 1);
+    }
+  }
+
+  function resize(){
+    var w = wrapEl.clientWidth, h = wrapEl.clientHeight;
+    if (!w || !h) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    frameCamera();
+  }
+  collectFitPoints();
+  window.addEventListener('resize', resize);
+  resize();
+  armIdle();
+
+  var clock = new THREE.Clock();
+  function animate(){
+    requestAnimationFrame(animate);
+    var dt = Math.min(clock.getDelta(), 0.05);
+    if (!dragging && !auto && idleLeft > 0){
+      idleLeft -= dt * 1000;
+      if (idleLeft <= 0){
+        idleLeft = 0;
+        auto = true;
+      }
+    }
+    if (auto && !dragging) yaw += AUTO_SPEED * dt;
+    if (yaw > Math.PI * 8) yaw -= Math.PI * 2;
+    if (yaw < -Math.PI * 8) yaw += Math.PI * 2;
+    turntable.rotation.y = yaw;
+    var t = clock.elapsedTime;
+    MAT.gemEmber.emissiveIntensity = 1.45 + Math.sin(t * 2.2) * 0.35;
+    var pos = sparkGeo.attributes.position.array;
+    for (var i = 0; i < SPARKS; i++){
+      var sd = sparkSeed[i];
+      var y = ((t * sd.s + sd.o * 3.2) % 3.2);
+      var a = sd.a + t * 0.22 + y * 0.3;
+      pos[i * 3] = Math.cos(a) * sd.r;
+      pos[i * 3 + 1] = 0.2 + y;
+      pos[i * 3 + 2] = Math.sin(a) * sd.r;
+    }
+    sparkGeo.attributes.position.needsUpdate = true;
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
+</script>
+</body>
+</html>
